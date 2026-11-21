@@ -1,7 +1,5 @@
 # CSDMA: A State-Driven Multi-Agent Framework for Conversational Psychometrics
 
-> **Anonymous repository for a paper submitted to IUI 2027.**
-
 CSDMA is a **state-driven multi-agent framework for conversational psychometric assessment**.
 Instead of administering standardized questionnaire items in a rigid question-by-question manner, CSDMA integrates psychometric assessment into natural multi-turn dialogue and dynamically adapts its conversational behavior according to the user's responses.
 

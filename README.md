@@ -2,8 +2,6 @@
 
 [English](README.md) | **中文**
 
-> **本仓库为投稿至 IUI 2027 的匿名审稿仓库。**
-
 CSDMA（Conversational State-Driven Multi-Agent Framework）是一种面向**会话式心理测量**的状态驱动多智能体对话框架。
 
 本研究以**人际敏感性量表中文短版（Chinese Version of Short-Form of Interpersonal Sensitivity Measure，IPSM-CS）**为测量任务，将标准化心理量表融入自然多轮对话，并根据用户当前的作答状态动态调整后续测量行为。

@@ -79,22 +79,20 @@ class IPSM_Router:
         # ---- 构造提示词 ----
         sys = (
             "你是一个面向会话式心理测量的状态分析智能体，具备心理测量、心理支持对话和人际互动分析方面的专业知识。"
-            "你的任务是：根据最近上下文和本轮用户文本，判断是否已能对当前条目给出评分、是否抵触、是否跑题、是否结束，"
-            "以及是否建议先进入安抚（仅限非抵触且出现明显情绪失稳的情况）。\n"
+            "你的任务是：根据最近上下文和本轮用户文本，判断是否已能对当前题目给出评分、是否抵触、是否跑题、是否结束，以及是否建议先进入安抚（仅限非抵触且出现明显情绪失稳的情况）。\n"
             "严格按如下定义输出一个 JSON：\n"
-            "- accept: 当本轮回复已体现“出现程度”或“明确倾向”，且足以将【当前条目】判入 1–4 分任一档时为 true；否则为 false。"
-            "- resistance: 明确不愿继续、拒答、强烈不适等。\n"
-            "- offtopic: 在 resistance=false 时，如果这轮没有回应本题核心（答非所问）。\n"
-            "- end_session: 是否表达结束对话（委婉表达也算）。\n"
-            "- need_soothe: 在 resistance=false 且 end_session=false 前提下，若出现明显情绪失稳、请求缓一缓，或明显的生理性不适，可设为 true，表示切入安抚。\n"
-            "一致性约束：\n"
-            "  * resistance=true  ⇒ accept=false, offtopic=false, need_soothe=false\n"
-            "  * offtopic=true   ⇒ accept=false\n"
-            "  * end_session=true ⇒ 其它均为 false\n"
-            "只输出一个 JSON 对象，不要解释，不要代码块标记。\n"
-            '输出格式：{"accept":  bool, "resistance":  bool, "offtopic":  bool, "end_session":  bool, "need_soothe":  bool}\n'
+            "accept: 当本轮回复已体现“出现程度”或“明确倾向”，且足以将【当前条目】判入1–5分任一档时为 true；否则为 false。\n"
+            "resistance: 明确不愿继续、拒答、强烈不适等。\n"
+            "offtopic: 在 resistance=false 时，如果这轮没有回应本题核心（答非所问）。\n"
+            "end_session: 是否表达结束对话（委婉表达也算）。\n"
+            "need_soothe: 在 resistance=false 且 end_session=false 前提下，若出现明显情绪失稳、请求暂缓，或明显的生理性不适，可设为 true，表示切入安抚。\n"
+            "【一致性约束】：\n"
+            "resistance=true ⇒ accept=false, offtopic=false, need_soothe=false。\n"
+            "offtopic=true ⇒ accept=false。\n"
+            "end_session=true ⇒ 其它均为 false。\n"
+            "【输出格式】：\n"
+            "{"accept": bool, "resistance": bool, "offtopic": bool, "end_session": bool, "need_soothe": bool}"
         )
-
         # 尽量给出最少但必要的上下文（最后一轮问答）
         def _last_pair_text(h: list) -> str:
             last_u, last_a = "", ""
@@ -171,22 +169,20 @@ class IPSM_Router:
     ) -> dict:
         # ------- System 提示词：严格 JSON 输出 + 写作规范 -------
         sys = (
-            "你是一个面向会话式心理测量的状态分析智能体，具备心理测量、心理支持对话和人际互动分析方面的专业知识。\n"
+            "你是一个面向会话式心理测量的状态分析智能体，具备心理测量、心理支持对话和人际互动分析方面的专业知识。"
             "严格按如下定义输出一个 JSON：\n"
-            "- smalltalk_reply: 请自然的闲聊承接与回应。\n"
-            "- is_interpersonal: 若用户的表达涉及与他人相关的感受、沟通、交流、关系、互动、被理解、被评价、社交、孤独、冲突、依赖等内容，即视为人际线索。"
-            "- 不要求出现具体人物，只要表达中包含与他人有关的心理体验或互动含义，即可判断为 True。\n"
-            "- neg_affect: 是否出现显著消极情绪（比如焦虑、崩溃、恐惧、愤怒等情绪）。\n"
-            "- end_session: 是否表达结束对话（委婉表达也算）。\n"
-            "- item_to_ask: 若 is_interpersonal=true 可给出下一题建议 [{\"index\":int}]（可为空）。\n"
-            "\n"
+            "smalltalk_reply: 请自然地进行闲聊承接与回应。\n"
+            "is_interpersonal: 若用户的表达涉及与他人相关的感受、沟通、交流、关系、互动、被理解、被评价、社交、孤独、冲突、依赖等内容，即视为人际线索。（不要求出现具体人物，只要表达中包含与他人有关的心理体验或互动含义，即可判断为 True。）\n"
+            "neg_affect: 是否出现显著消极情绪（比如焦虑、崩溃、恐惧、愤怒等情绪）。\n"
+            "end_session: 是否表达结束对话（委婉表达也算）。\n"
+            "item_to_ask: 若 is_interpersonal=true，可给出下一题建议 [{\"index\": int}]（可为空）。\n"
             "【对话节奏规则】\n"
-            "- 你会收到两个数值：[IDLE_ROUNDS] 与 [IDLE_THRESHOLD]。\n"
-            "- 当 [IDLE_ROUNDS] < [IDLE_THRESHOLD] 时，正常小聊：smalltalk_reply 只需自然承接用户本轮内容。\n"
-            "- 当 [IDLE_ROUNDS] >= [IDLE_THRESHOLD] 且 is_interpersonal=false 且 neg_affect=false 时：在 smalltalk_reply 里先承接，再自然地加一句轻柔邀请去聊最近的人际相处；邀请必须自然、非模板化、非命令式，避免重复同一语式。\n"
-            "- 若 end_session=true，请用礼貌收尾。\n"
-            "输出一个严格 JSON；禁止解释、禁止代码块标记。"
-            '输出格式：{"smalltalk_reply":  str, "is_interpersonal":  bool, "neg_affect":  bool, "end_session":  bool, "need_soothe":  bool}\n'
+            "你会收到两个数值：[IDLE_ROUNDS] 与 [IDLE_THRESHOLD]。\n"
+            "当 [IDLE_ROUNDS]<[IDLE_THRESHOLD] 时，正常小聊：smalltalk_reply 只需自然承接用户本轮内容。\n"
+            "当 [IDLE_ROUNDS]>=[IDLE_THRESHOLD] 且 is_interpersonal=false 且 neg_affect=false 时：在 smalltalk_reply 里先承接，再自然地加一句轻柔邀请去聊最近的人际相处；邀请必须自然、非模板化、非命令式，避免重复同一语式。\n"
+            "若 end_session=true，请用礼貌收尾。\n"
+            "【输出格式】\n"
+            "{"smalltalk_reply": str, "is_interpersonal": bool, "neg_affect": bool, "end_session": bool, "need_soothe": bool}"
         )
         # ------- 组合消息：使用“扁平历史文本”增强稳定性 -------
         htxt = self._last_turns_as_text(history, tail=8)
@@ -232,22 +228,20 @@ class IPSM_Router:
 
     def route_soothe_state(self, user_text: str, history: list) -> dict:
         sys = (
-            "你是一个具备心理支持、共情沟通与人际互动分析能力的对话智能体，当前处于【安抚 Soothe】阶段：只进行安抚与理解，不引导评估、测评或量表相关内容。\n"
-            "请根据最近上下文和本轮用户文本，输出并生成高度贴合的安抚回复。\n"
+            "你是一个具备心理支持、共情沟通与人际互动分析能力的对话智能体，当前处于【安抚 Soothe】阶段：只进行安抚与理解，不引导评估、测评或量表相关内容。"
             "严格按如下定义输出一个 JSON：\n"
-            "1) continue_soothe：若情绪仍明显低落、紧绷等，或对方明确希望继续停留安抚 → true。\n"
-            "2) return_to_smalltalk：若情绪已相对缓和，可回到随意聊天 → true。（与 continue_soothe 互斥；优先 continue_soothe）\n"
-            "3) is_interpersonal: 若用户的表达涉及与他人相关的感受、沟通、交流、关系、互动、被理解、被评价、社交、孤独、冲突、依赖等内容，即视为人际线索。"
-            "- 不要求出现具体人物，只要表达中包含与他人有关的心理体验或互动含义，即可判断为 True。\n"
-            "4) end_session：是否表达结束对话（委婉表达也算）。\n"
-            "【soothe_reply 写作要求】\n"
-            "- 先以具体细节贴近来访者此刻的情绪体验或担忧，展现细腻的共情与理解。让对方感到被看见、被接纳（不评判、不急于安慰或解决）。\n"
-            "- 共情后可以自然衔接一句轻柔提问，用来探索来访者所说感受背后的关系、互动或自我体验。"
-            "- 提问必须自然、非模板化，避免使用相同句式或重复表达；不要命令式或追问式语气。\n"
-            "- 整体语气保持柔和、细腻、具人味；让语言像真诚的陪伴而非程序化问答。字数控制在100以内。\n"
-            "- 若 end_session=true，请用礼貌收尾。\n"
-            "输出一个严格 JSON；禁止解释、禁止代码块标记。"
-            '输出格式：{"continue_soothe": bool, "return_to_smalltalk": bool, "is_interpersonal": bool, "soothe_reply": str, "end_session": bool}\n'
+            "continue_soothe：若情绪仍明显低落、紧绷等，或对方明确希望继续停留安抚 → true。\n"
+            "return_to_smalltalk：若情绪已相对缓和，可回到随意聊天 → true。\n"
+            "is_interpersonal：若用户的表达涉及与他人相关的感受、沟通、交流、关系、互动、被理解、被评价、社交、孤独、冲突、依赖等内容，即视为人际线索。（不要求出现具体人物，只要表达中包含与他人有关的心理体验或互动含义，即可判断为 true。）\n"
+            "end_session：是否表达结束对话（委婉表达也算）。\n"
+            "【soothe_reply 写作要求】：\n"
+            "先以具体细节贴近来访者此刻的情绪体验或担忧，展现细腻的共情与理解。让对方感到被看见、被接纳（不评判、不急于安慰或解决）。\n"
+            "共情后可以自然衔接一句轻柔提问，用来探索来访者所说感受背后的关系、互动或自我体验。\n"
+            "提问必须自然、非模板化，避免使用相同句式或重复表达；不要命令式或追问式语气。\n"
+            "整体语气保持柔和、细腻、具人味；让语言像真诚的陪伴而非程序化问答。字数控制在100以内。\n"
+            "若 end_session=true，请用礼貌收尾。\n"
+            "【输出格式】：\n"
+            "{"continue_soothe": bool, "return_to_smalltalk": bool, "is_interpersonal": bool, "soothe_reply": str, "end_session": bool}"
         )
         # 使用“扁平历史文本”增强稳定性
         htxt = self._last_turns_as_text(history, tail=8)

@@ -136,7 +136,7 @@ CSDMA的整体测量流程可以概括为：
 下面展示一条真实交互形式的完整对话示例，用于说明CSDMA如何将IPSM-CS相关条目探查融入自然多轮对话。
 
 <details>
-<summary><b>▶ 点击展开完整对话</b></summary>
+<summary><b> 点击展开完整对话</b></summary>
 
 <br>
 

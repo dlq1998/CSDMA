@@ -34,14 +34,6 @@ def _chat(
 
 
 def _extract_json(text: str) -> dict:
-    """
-    尝试把 LLM 输出解析成 JSON：
-    1) 先严格 json.loads
-    2) 去除三反引号代码块与语言标记后再解析
-    3) 提取第一个 {...} 片段再解析
-    4) 容忍单引号/无引号 key：将 {score: 1} / {'score':1} 规范化
-    5) 最后兜底：直接用正则抓 "score" 的 1~4
-    """
     raw = text.strip()
 
     # 1) 严格 JSON

@@ -10,8 +10,6 @@ from dataclasses import dataclass, field
 import traceback
 import logging
 
-
-# —— 智能体 —— #
 from agent_router import IPSM_Router
 from agent_question_rewriter import rewrite_question
 from agent_severity import score_severity_1_5, load_ipsm_levels
@@ -27,19 +25,16 @@ class DialogueStats:
     user_chars: int = 0
     ai_chars: int = 0
 
-    # 阶段管理
     current_stage: str = "smalltalk"  # smalltalk | item_flow | soothe
     switch_to_smalltalk_count_total: int = 0
     switch_to_smalltalk_count_human: int = 0
     switch_itemflow_to_smalltalk: int = 0  
     switch_itemflow_to_soothe: int = 0  
 
-    # 题目相关
     all_indices: list = field(default_factory=list)  
     index_to_prompt: dict = field(default_factory=dict) 
     answered_indices: set = field(default_factory=set) 
 
-    # 原始 print/input 引用
     _orig_print: callable = None
     _orig_input: callable = None
 
@@ -72,7 +67,6 @@ class DialogueStats:
         self.current_stage = "smalltalk"
 
     def patch_io(self):
-        """全局替换 print/input，用于自动记 AI/用户说话与长度"""
         if self._orig_print is None:
             self._orig_print = builtins.print
         if self._orig_input is None:
@@ -102,9 +96,7 @@ class DialogueStats:
         if self._orig_input:
             builtins.input = self._orig_input
 
-    # —— 导出统计 —— #
     def export_dialogue_stats(self) -> dict:
-        # 平均字数（分母至少为 1，避免除零）
         avg_user = round(self.user_chars / max(1, self.user_turns), 2)
         avg_ai = round(self.ai_chars / max(1, self.ai_turns), 2)
         total_turns = self.user_turns + self.ai_turns
@@ -204,7 +196,6 @@ class ChatSession:
         except Exception:
             return 0
 
-    # —— 小工具 —— #
     def _emit_smalltalk_now(self) -> dict:
         last_user = self._last_user_text()
         all_done = len(self.already_asked) >= len(ALL_INDICES)
@@ -221,7 +212,6 @@ class ChatSession:
         except Exception as e:
             print("[FATAL] pipeline crashed:", e)
             traceback.print_exc()
-            # 兜底：极简一句（仅在 LLM 崩溃时使用）
             self._say("我在，先缓一缓，慢慢来。")
             self.mode = "smalltalk"
             return {}
